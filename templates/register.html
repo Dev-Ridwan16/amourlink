@@ -1,0 +1,88 @@
+{%extends 'base.html' %} {% block head %} {% endblock %} {% block body %}
+<div class="w-full h-screen bg-red-50 relative">
+  <div id="flash-messages">
+    {% with messages = get_flashed_messages(with_categories=true) %} {% if messages %}
+    <script>
+      console.log("Flash messages:")
+    </script>
+    <ul
+      class="absolute w-[400] p-[15px] bg-[#fff] z-[999] left-[95%] translate-x-[-95%] rounded-xl mt-10"
+    >
+      {% for category, message in messages %}
+      <li class="{{ category }}">{{ message }}</li>
+      {% endfor %}
+    </ul>
+    {% endif %} {% endwith %}
+  </div>
+  <div class="relative w-full h-full">
+    <img
+      src="{{ url_for('static', filename='/assets/images/val_kit_1.png') }}"
+      alt=""
+      class="w-auto h-[200px] absolute lg:top-[10%] lg:translate-y-[-10%] left-[10%] translate-x-[-10%]"
+    />
+    <img
+      src="{{ url_for('static', filename='/assets/images/val_kit_2.png') }}"
+      alt=""
+      class="w-auto h-[300px] absolute top-[80%] translate-y-[-80%] left-[10%] translate-x-[-10%]"
+    />
+    <img
+      src="{{ url_for('static', filename='/assets/images/val_kit_3.png') }}"
+      alt=""
+      class="w-[300] h-[300px] absolute top-[110%] translate-y-[-110%] lg:top-[5%] lg:translate-y-[-5%] left-[70%] translate-x-[-70%]"
+    />
+    <img
+      src="{{ url_for('static', filename='/assets/images/val_kit_4.png') }}"
+      alt=""
+      class="w-[400px] h-[400px] absolute lg:top-[100%] lg:translate-y-[-100%] left-[90%] translate-x-[-90%]"
+    />
+  </div>
+
+  <!-- Registration Form -->
+  <div
+    class="absolute top-[45%] left-[50%] translate-y-[-45%] translate-x-[-50%] bg-[#ffffff] w-[350px] h-[500px] rounded-xl flex items-center"
+  >
+    <div class="w-full h-[450px] max-w-[300px] mx-auto">
+      <h1 class="text-center text-[24px] font-bold">Create Account</h1>
+      <p class="text-center text-slate-500 text-[14px] mt-3">Create account and meet your val</p>
+
+      <section class="mt-5">
+        <form action="/register" method="post" class="flex flex-col gap-[20px]">
+          {{ form.hidden_tag() }}
+
+          <div>{{ form.name(class="p-3 text-[12px]") }}</div>
+          <div>{{ form.username(class="p-3 text-[12px]") }}</div>
+          <div>{{ form.role(class="px-3 text-[12px]") }}</div>
+          <div class="relative">
+            {{ form.password(class="password-field p-3 text-[12px]") }}
+            <span
+              id="toggle-password"
+              class="absolute right-[10px] top-[50%] translate-y-[-50%] cursor-pointer text-[10px] text-[#a9a9a9]"
+            >
+              SHOW
+            </span>
+          </div>
+          <div>{{ form.submit(class="bg-red-500 text-red-50 text-[12px]") }}</div>
+        </form>
+
+        <p class="text-[12px] text-center py-2">
+          By clicking register, you agree with our Terms of Use & Privacy Policy
+        </p>
+
+        <footer class="text-[12px] text-center pt-2 text-slate-400">
+          Already have an account? <a href="{{ url_for('login') }}" class="text-red-500">Login</a>
+        </footer>
+      </section>
+    </div>
+  </div>
+</div>
+
+<script>
+  const toggleBtn = document.querySelector("#toggle-password")
+  const passwordField = document.querySelector(".password-field")
+
+  toggleBtn.addEventListener("click", () => {
+    passwordField.type = passwordField.type === "password" ? "text" : "password"
+    toggleBtn.textContent = passwordField.type === "password" ? "SHOW" : "HIDE"
+  })
+</script>
+{% endblock %}
