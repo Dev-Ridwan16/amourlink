@@ -9,6 +9,8 @@
     {% block head %} {% endblock %}
   </head>
   <body>
-    {% block body %} {% endblock %}
+    <script src="{{ url_for('static', filename='js/main.js') }}" defer></script>
+    {% block body %}
+    {% endblock %}
   </body>
 </html>
