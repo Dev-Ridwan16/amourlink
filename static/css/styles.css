@@ -4,11 +4,14 @@ h1 {
   font-family: "Oxanium", serif;
 }
 
-body {
+body,
+p {
   font-family: "Poppins", serif;
 }
 
-input, select, button {
+input,
+select,
+button {
   height: 40px;
   width: 100%;
   border: 1px solid #ccc;
@@ -16,6 +19,21 @@ input, select, button {
   border-radius: 5px;
 }
 
-button {
-    border: none;
+div.partner-card {
+  /* w-[400px] h-[500px] hidden lg:block absolute left-[90%] translate-x-[-90%] top-[50%] translate-y-[-50%] bg-slate-50 rounded-xl */
+  width: 400px;
+  height: 500px;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  background-color: #fcfcfc;
+}
+
+.active {
+  display: block;
+}
+
+.hide {
+  display: none;
 }

@@ -1,9 +1,10 @@
-from flask import Flask, render_template, redirect, url_for, flash
+from flask import Flask, render_template, redirect, url_for, flash, request
 from flask_sqlalchemy import SQLAlchemy
 from flask_bcrypt import Bcrypt
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField, TextAreaField, SelectField
 from wtforms.validators import InputRequired, Length, ValidationError, DataRequired
+# from flask_uploads import UploadSet, configure_uploads, IMAGES
 from flask_login import (
     UserMixin,
     login_user,
@@ -16,6 +17,9 @@ from flask_login import (
 # import bleach
 import os
 import enum
+import cloudinary
+import cloudinary.api
+import cloudinary.uploader
 
 app = Flask(__name__)
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
@@ -24,13 +28,24 @@ app.config["SQLALCHEMY_DATABASE_URI"] = (
     f"sqlite:///{os.path.join(BASE_DIR, "database.db")}"
 )
 app.config["SECRET_KEY"] = "valentine_secret_key"
+app.config["UPLOADED_IMAGES_DEST"] = (
+    "static/uploads"  # Save images inside "static/uploads"
+)
 
+# images = UploadSet("images", IMAGES)
+# configure_uploads(app, images)
 db = SQLAlchemy(app)
 bcrypt = Bcrypt(app)
 
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = "login"
+
+cloudinary.config(
+    cloud_name="dn0oyklzh",
+    api_key="885238954191491",
+    api_secret="E-PHLOY6Q6z2Hf9MqD0Ea36Xz5c",
+)
 
 
 @login_manager.user_loader
@@ -39,23 +54,25 @@ def load_user(user_id):
 
 
 class RoleEnum(enum.Enum):
-    BOYFRIEND = "boyfriend"
-    GIRLFRIEND = "girlfriend"
+    BOYFRIEND = "BOYFRIEND"
+    GIRLFRIEND = "GIRLFRIEND"
 
 
 class ActivityEnum(enum.Enum):
-    NAUGHTY = "naughty"
-    FRIENDLY = "friendly"
-    normal = "normal"
+    NAUGHTY = "NAUGHTY"
+    FRIENDLY = "FRIENDLY"
+    NORMAL = "NORMAL"
 
 
 class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(80), nullable=False)
-    partner = db.Column(db.Integer, db.ForeignKey("user.id"))
     username = db.Column(db.String(80), unique=True, nullable=False)
     password = db.Column(db.String(80), nullable=False)
+    partner = db.Column(db.Integer, db.ForeignKey("user.id"))
     role = db.Column(db.Enum(RoleEnum), nullable=False)
+    taken = db.Column(db.Boolean, default=False)
+    image_url = db.Column(db.String(255), nullable=True)
 
 
 class RegisterForm(FlaskForm):
@@ -77,8 +94,8 @@ class RegisterForm(FlaskForm):
     role = SelectField(
         "Role",
         choices=[
-            ("girlfriend", "girlfriend"),
-            ("boyfriend", "boyfriend"),
+            ("BOYFRIEND", "BOYFRIEND"),
+            ("GIRLFRIEND", "GIRLFRIEND"),
         ],
         validators=[DataRequired()],
     )
@@ -155,6 +172,52 @@ def login():
                 flash(f"Error in field {field}: {error}", "danger")
 
     return render_template("login.html", form=form)
+
+@app.route("/logout", methods=["GET", "POST"])
+@login_required
+def logout():
+    logout_user()
+    return redirect(url_for("login"))
+
+@app.route("/home", methods=["GET", "POST"])
+@login_required
+def home():
+    user = current_user
+    search_query = request.args.get("search", "")
+    image_url = None
+
+    users = []
+    if search_query:
+        users = User.query.filter(User.username.ilike(f"%{search_query}")).all()
+
+    return render_template(
+        "home.html",
+        user=user,
+        users=users,
+        search_query=search_query,
+        image_url=image_url,
+    )
+
+
+@app.route("/upload_image", methods=["POST"])
+@login_required
+def upload_image():
+    if "image" in request.files:
+        image_file = request.files["image"]
+        if image_file:
+            # 🔹 Upload Image to Cloudinary
+            upload_result = cloudinary.uploader.upload(image_file)
+            image_url = upload_result["secure_url"]  # Get Cloudinary URL
+
+            # 🔹 Store the image URL in the user's profile
+            current_user.image_url = image_url
+            db.session.commit()
+
+            flash("Image uploaded successfully!", "success")
+            return redirect(url_for("home"))
+
+    flash("No image selected", "warning")
+    return redirect(url_for("home"))
 
 
 if __name__ == "__main__":

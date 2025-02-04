@@ -1,0 +1,228 @@
+{% extends 'base.html' %} {% block head %} {% endblock %} {% block body %}
+<main class="w-full h-screen flex items-center">
+  <div class="max-w-[350px] lg:max-w-[1200px] mx-auto w-full h-[95vh]">
+    <div class="flex items-center gap-5">
+      <form
+        action="{{ url_for('upload_image') }}"
+        method="POST"
+        enctype="multipart/form-data"
+        class="my-5"
+      >
+        <label for="imageUpload" class="cursor-pointer">
+          {% if current_user.image_url %}
+          <img
+            src="{{ current_user.image_url }}"
+            alt="Profile Image"
+            class="w-[60px] h-[60px] lg:w-[100px] lg:h-[100px] rounded-xl object-cover"
+          />
+          {% else %}
+          <div
+            class="w-[50px] h-[50px] lg:w-[100px] lg:h-[100px] rounded-xl bg-gray-200 flex items-center justify-center"
+          >
+            <span class="text-gray-500 text-sm hidden">Upload</span>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              class="icon icon-tabler icons-tabler-outline icon-tabler-photo-up lg:hidden"
+            >
+              <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+              <path d="M15 8h.01" />
+              <path d="M12.5 21h-6.5a3 3 0 0 1 -3 -3v-12a3 3 0 0 1 3 -3h12a3 3 0 0 1 3 3v6.5" />
+              <path d="M3 16l5 -5c.928 -.893 2.072 -.893 3 0l3.5 3.5" />
+              <path d="M14 14l1 -1c.679 -.653 1.473 -.829 2.214 -.526" />
+              <path d="M19 22v-6" />
+              <path d="M22 19l-3 -3l-3 3" />
+            </svg>
+          </div>
+          {% endif %}
+        </label>
+
+        <input
+          type="file"
+          id="imageUpload"
+          name="image"
+          accept="image/*"
+          class="hidden"
+          onchange="previewImage(event)"
+        />
+
+        <button
+          type="submit"
+          class="bg-red-500 border-none w-[50px] lg:w-[100px] text-[12px] text-red-50 mt-3 flex items-center justify-center gap-2"
+        >
+          <span class="hidden lg:block">Upload</span>
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            class="icon icon-tabler icons-tabler-outline icon-tabler-photo-up"
+          >
+            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+            <path d="M15 8h.01" />
+            <path d="M12.5 21h-6.5a3 3 0 0 1 -3 -3v-12a3 3 0 0 1 3 -3h12a3 3 0 0 1 3 3v6.5" />
+            <path d="M3 16l5 -5c.928 -.893 2.072 -.893 3 0l3.5 3.5" />
+            <path d="M14 14l1 -1c.679 -.653 1.473 -.829 2.214 -.526" />
+            <path d="M19 22v-6" />
+            <path d="M22 19l-3 -3l-3 3" />
+          </svg>
+        </button>
+      </form>
+      <div class="flex flex-col lg:gap-1">
+        <h1 class="text-[20px] lg:text-[40px] font-bold">Welcome {{ user.name }}</h1>
+        <p class="text-[14px] lg:text-[20px] text-slate-400">@{{user.username}}</p>
+        <div class="flex items-center gap-[10px]">
+          <button
+            type="submit"
+            class="text-red-500 w-[100px] text-[12px] border-none bg-red-50 mt-[19px] lg:mt-[18px]"
+            onclick="alert('Hello')"
+          >
+            Toasters (4)
+          </button>
+          <button
+            type="button"
+            id="partnerBtn"
+            class="text-red-500 w-[100px] text-[12px] border border-red-500 mt-[19px] lg:mt-[18px]"
+          >
+            My Partner
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="my-10 lg:w-[500px]">
+      <form action="{{ url_for('home') }}" class="flex items-center gap-5">
+        <input
+          type="text"
+          name="search"
+          placeholder="Find val..."
+          value="{{ search_query }}"
+          class="p-3 text-[12px]"
+        />
+        <button type="submit" class="bg-red-500 border-none w-[100px] text-[12px] text-red-50">
+          Search
+        </button>
+      </form>
+
+      {% if users %}
+      <h1 class="my-5 text-[14px] text-[#bbbbbb]">Search Results</h1>
+      <ul>
+        {% for user in users %}
+        <li class="flex items-center justify-between p-[10px] rounded-xl bg-[#fcfcfc]">
+          <div class="flex items-center gap-[15px]">
+            <img class="w-[50px] h-[50px] rounded-full border" src="{{user.image_url}}" />
+            <div class="flex flex-col gap-1">
+              <h1 class="text-[16px] flex items-center gap-2">
+                {{ user.username }}
+                <p class="text-[12px] text-slate-400">
+                  {% if user.id == current_user.id %}
+                  <span>(You)</span>
+                  {% else %}
+                  <span>(@{{ user.username }})</span>
+                  {% endif %}
+                </p>
+              </h1>
+
+              <div>
+                {% if user.partner %}
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="#a9a9a9"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  class="icon icon-tabler icons-tabler-outline icon-tabler-lock"
+                >
+                  <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                  <path
+                    d="M5 13a2 2 0 0 1 2 -2h10a2 2 0 0 1 2 2v6a2 2 0 0 1 -2 2h-10a2 2 0 0 1 -2 -2v-6z"
+                  />
+                  <path d="M11 16a1 1 0 1 0 2 0a1 1 0 0 0 -2 0" />
+                  <path d="M8 11v-4a4 4 0 1 1 8 0v4" />
+                </svg>
+                {% else %}
+                <p class="text-[10px] text-slate-400">No partner yet</p>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+          {% if user.id == current_user.id %}
+          <p></p>
+          {% else %}
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            class="icon icon-tabler icons-tabler-outline icon-tabler-heart"
+          >
+            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+            <path
+              d="M19.5 12.572l-7.5 7.428l-7.5 -7.428a5 5 0 1 1 7.5 -6.566a5 5 0 1 1 7.5 6.572"
+            />
+          </svg>
+          {% endif %}
+        </li>
+        {% endfor %}
+      </ul>
+      {% elif search_query %}
+      <p class="text-slate-400 text-[12px] my-[50px] text-center">
+        No users found for "{{ search_query }}"
+      </p>
+      {% endif %}
+    </div>
+
+    <!-- PARTNER CARD -->
+    <div
+      class="hidden lg:block w-[400px] h-[500px] hidden lg:block absolute left-[90%] translate-x-[-90%] top-[50%] translate-y-[-50%] bg-slate-50 rounded-xl"
+    ></div>
+
+    <div class="partner-card hide rounded-xl"></div>
+  </div>
+
+  <a
+    href="{{url_for('logout')}}"
+    class="fixed bottom-[30px] z-[999] left-5 lg:left-[80px] bg-red-500 flex items-center justify-center gap-2 lg:w-[120px] w-[50px] h-[50px] rounded-full lg:rounded-xl text-[12px] text-red-50"
+  >
+    <span class="hidden lg:block">Logout</span>
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      class="icon icon-tabler icons-tabler-outline icon-tabler-logout"
+    >
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M14 8v-2a2 2 0 0 0 -2 -2h-7a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h7a2 2 0 0 0 2 -2v-2" />
+      <path d="M9 12h12l-3 -3" />
+      <path d="M18 15l3 -3" />
+    </svg>
+  </a>
+</main>
+{% endblock %}
