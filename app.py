@@ -4,6 +4,7 @@ from flask_bcrypt import Bcrypt
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField, TextAreaField, SelectField
 from wtforms.validators import InputRequired, Length, ValidationError, DataRequired
+
 # from flask_uploads import UploadSet, configure_uploads, IMAGES
 from flask_login import (
     UserMixin,
@@ -64,6 +65,17 @@ class ActivityEnum(enum.Enum):
     NORMAL = "NORMAL"
 
 
+class Like(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+    liked_user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+    user = db.relationship("User", foreign_keys=[user_id])
+    liked_user = db.relationship("User", foreign_keys=[liked_user_id])
+
+    def __repr__(self):
+        return f"<Like {self.user_id} -> {self.liked_user_id}>"
+
+
 class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(80), nullable=False)
@@ -73,6 +85,18 @@ class User(db.Model, UserMixin):
     role = db.Column(db.Enum(RoleEnum), nullable=False)
     taken = db.Column(db.Boolean, default=False)
     image_url = db.Column(db.String(255), nullable=True)
+    likes = db.Column(db.Integer, default=0)
+
+    # Rename the backref to avoid name conflicts
+    liked_users = db.relationship(
+        "Like", backref="user_who_likes", lazy="dynamic", foreign_keys=[Like.user_id]
+    )
+    liked_by_users = db.relationship(
+        "Like",
+        backref="user_who_is_liked",
+        lazy="dynamic",
+        foreign_keys=[Like.liked_user_id],
+    )
 
 
 class RegisterForm(FlaskForm):
@@ -173,11 +197,13 @@ def login():
 
     return render_template("login.html", form=form)
 
+
 @app.route("/logout", methods=["GET", "POST"])
 @login_required
 def logout():
     logout_user()
     return redirect(url_for("login"))
+
 
 @app.route("/home", methods=["GET", "POST"])
 @login_required
@@ -217,6 +243,34 @@ def upload_image():
             return redirect(url_for("home"))
 
     flash("No image selected", "warning")
+    return redirect(url_for("home"))
+
+
+@app.route("/like-user/<int:user_id>", methods=["POST", "GET"])
+@login_required
+def like_user(user_id):
+    liked_user = User.query.get(user_id)
+
+    if not liked_user:
+        return redirect(url_for("home"))
+
+    if liked_user.id == current_user.id:
+        return redirect(url_for("home"))
+
+    existing_like = Like.query.filter_by(
+        user_id=current_user.id, liked_user_id=liked_user.id
+    ).first()
+
+    if existing_like:
+        db.session.delete(existing_like)
+        liked_user.likes -= 1
+        db.session.commit()
+    else:
+        new_like = Like(user_id=current_user.id, liked_user_id=liked_user.id)
+        db.session.add(new_like)
+        liked_user.likes += 1
+        db.session.commit()
+
     return redirect(url_for("home"))
 
 
